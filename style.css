@@ -1,0 +1,296 @@
+:root {
+  --bg: #12211a;
+  --panel: #1c3327;
+  --panel-raised: #244032;
+  --seam: #0c1712;
+  --brass: #b8935a;
+  --brass-light: #ddc08a;
+  --brass-dim: #7d6440;
+  --ivory: #ece4d3;
+  --muted: #9a917d;
+  --rust: #b1553a;
+  --felt-shadow: rgba(0, 0, 0, 0.45);
+  --radius: 3px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at top, rgba(184, 147, 90, 0.06), transparent 60%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.05) 0px,
+      rgba(0, 0, 0, 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  color: var(--ivory);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+h1,
+h2,
+.display {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Lock screen ---------- */
+
+.lock-screen {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.dial-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 28px;
+}
+
+.dial-wrap svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 22px var(--felt-shadow));
+  transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.dial-wrap.spinning svg {
+  transform: rotate(1080deg);
+}
+
+.lock-screen h1 {
+  font-size: 1.65rem;
+  margin: 0 0 6px;
+  color: var(--brass-light);
+}
+
+.lock-screen .sub {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.passphrase-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+input[type="password"],
+input[type="text"] {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--brass-dim);
+  color: var(--ivory);
+  padding: 12px 14px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.95rem;
+  border-radius: var(--radius);
+  outline: none;
+  letter-spacing: 0.03em;
+}
+
+input[type="password"]:focus,
+input[type="text"]:focus {
+  border-color: var(--brass-light);
+  box-shadow: 0 0 0 3px rgba(184, 147, 90, 0.18);
+}
+
+button {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid var(--brass-dim);
+}
+
+.btn-primary {
+  background: var(--brass);
+  color: #17281f;
+  border: none;
+  padding: 12px 20px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  width: 100%;
+  transition: background 150ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--brass-light);
+}
+
+.btn-primary:active {
+  background: var(--brass-dim);
+}
+
+.error-msg {
+  color: var(--rust);
+  font-size: 0.82rem;
+  margin-top: 14px;
+  min-height: 1.2em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-top: 24px;
+  line-height: 1.6;
+  border-top: 1px solid var(--seam);
+  padding-top: 16px;
+}
+
+/* ---------- Vault (unlocked) screen ---------- */
+
+.vault-screen {
+  width: 100%;
+  max-width: 720px;
+  display: none;
+}
+
+.vault-screen.active {
+  display: block;
+}
+
+.vault-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--seam);
+}
+
+.vault-header h2 {
+  font-size: 1.4rem;
+  color: var(--brass-light);
+  margin: 0;
+}
+
+.vault-header .sub {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.lock-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--seam);
+  padding: 8px 14px;
+  font-size: 0.75rem;
+}
+
+.lock-btn:hover {
+  color: var(--brass-light);
+  border-color: var(--brass-dim);
+}
+
+.box-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.box-row {
+  background: var(--panel);
+  border: 1px solid var(--seam);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.box-row-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.box-number {
+  font-family: "Fraunces", serif;
+  color: var(--brass);
+  font-size: 0.95rem;
+  min-width: 34px;
+}
+
+.box-label {
+  flex: 1;
+  color: var(--ivory);
+  font-size: 0.9rem;
+}
+
+.box-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: var(--panel-raised);
+  color: var(--muted);
+  border: 1px solid var(--seam);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+}
+
+.icon-btn:hover {
+  color: var(--brass-light);
+  border-color: var(--brass-dim);
+}
+
+.box-value-wrap {
+  margin-top: 10px;
+  display: none;
+}
+
+.box-value-wrap.revealed {
+  display: block;
+}
+
+.box-value {
+  background: var(--seam);
+  border: 1px dashed var(--brass-dim);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  color: var(--brass-light);
+  word-break: break-all;
+}
+
+.vault-footer {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--seam);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .box-row-top {
+    flex-wrap: wrap;
+  }
+  .box-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

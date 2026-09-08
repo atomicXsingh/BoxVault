@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vault encrypt tool — run locally, do not deploy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #12211a; --panel: #1c3327; --seam: #0c1712;
+      --brass: #b8935a; --brass-light: #ddc08a; --brass-dim: #7d6440;
+      --ivory: #ece4d3; --muted: #9a917d; --rust: #b1553a; --radius: 3px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--ivory);
+      font-family: "IBM Plex Mono", monospace;
+      max-width: 640px; margin: 0 auto; padding: 40px 20px 80px;
+    }
+    h1 { font-family: "Fraunces", serif; color: var(--brass-light); font-size: 1.4rem; margin-bottom: 4px; }
+    p.sub { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+    .warn {
+      background: var(--panel); border: 1px solid var(--rust);
+      color: var(--brass-light); padding: 14px 16px; border-radius: var(--radius);
+      font-size: 0.82rem; line-height: 1.6; margin: 20px 0;
+    }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 18px 0 6px; }
+    input, textarea {
+      width: 100%; background: var(--panel); border: 1px solid var(--brass-dim);
+      color: var(--ivory); padding: 10px 12px; font-family: inherit;
+      font-size: 0.88rem; border-radius: var(--radius); outline: none;
+    }
+    textarea { min-height: 160px; resize: vertical; line-height: 1.5; }
+    button {
+      margin-top: 20px; background: var(--brass); color: #17281f; border: none;
+      padding: 12px 20px; font-family: inherit; font-weight: 600; font-size: 0.85rem;
+      border-radius: var(--radius); cursor: pointer; width: 100%;
+    }
+    button:hover { background: var(--brass-light); }
+    #output {
+      margin-top: 24px; display: none;
+    }
+    #output pre {
+      background: var(--seam); border: 1px dashed var(--brass-dim);
+      border-radius: var(--radius); padding: 14px; font-size: 0.78rem;
+      white-space: pre-wrap; word-break: break-all; max-height: 260px; overflow: auto;
+    }
+    .row-actions { display: flex; gap: 10px; }
+    .row-actions button { flex: 1; }
+    .status { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Vault encrypt tool</h1>
+  <p class="sub">Turns your secrets into a ciphertext file (vault.enc.json). Run this by opening the file locally in a browser — do not deploy this page alongside real plaintext secrets.</p>
+
+  <div class="warn">
+    Run this offline, from a local copy of the repo, not from a hosted URL. Everything here stays in your browser tab — nothing is uploaded — but only you can verify that for your own copy. Never paste real secrets into a page you didn't fetch yourself.
+  </div>
+
+  <label for="passphrase">Passphrase (this becomes your unlock passphrase — make it long)</label>
+  <input type="password" id="passphrase" placeholder="e.g. four or five random words" />
+
+  <label for="entries">Entries — one per line, as: label = value</label>
+  <textarea id="entries" placeholder="Stripe live key = sk_live_xxxxxxxxxxxxxxxx
+Postgres prod URL = postgres://user:pass@host:5432/db
+Personal note = whatever you want to keep private"></textarea>
+
+  <button id="encryptBtn">Encrypt</button>
+
+  <div id="output">
+    <label>Paste this into data/vault.enc.json, then commit only this file</label>
+    <pre id="result"></pre>
+    <div class="row-actions">
+      <button id="copyBtn">Copy to clipboard</button>
+      <button id="downloadBtn">Download vault.enc.json</button>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <script>
+    const PBKDF2_ITERATIONS = 250000;
+
+    function bytesToBase64(bytes) {
+      let bin = "";
+      bytes.forEach((b) => (bin += String.fromCharCode(b)));
+      return btoa(bin);
+    }
+
+    function parseEntries(text) {
+      return text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const idx = line.indexOf("=");
+          if (idx === -1) return null;
+          return {
+            label: line.slice(0, idx).trim(),
+            value: line.slice(idx + 1).trim(),
+          };
+        })
+        .filter(Boolean);
+    }
+
+    async function deriveKey(passphrase, saltBytes) {
+      const enc = new TextEncoder();
+      const baseKey = await crypto.subtle.importKey(
+        "raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: saltBytes, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+        baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt"]
+      );
+    }
+
+    document.getElementById("encryptBtn").addEventListener("click", async () => {
+      const passphrase = document.getElementById("passphrase").value;
+      const entries = parseEntries(document.getElementById("entries").value);
+      const status = document.getElementById("status");
+
+      if (!passphrase || passphrase.length < 8) {
+        alert("Use a passphrase of at least 8 characters — longer is much better.");
+        return;
+      }
+      if (entries.length === 0) {
+        alert("Add at least one line as: label = value");
+        return;
+      }
+
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKey(passphrase, salt);
+
+      const plaintext = new TextEncoder().encode(JSON.stringify(entries));
+      const ciphertextBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+
+      const vaultFile = {
+        version: 1,
+        kdf: "PBKDF2-SHA256",
+        iterations: PBKDF2_ITERATIONS,
+        salt: bytesToBase64(salt),
+        iv: bytesToBase64(iv),
+        ciphertext: bytesToBase64(new Uint8Array(ciphertextBuf)),
+      };
+
+      const json = JSON.stringify(vaultFile, null, 2);
+      document.getElementById("result").textContent = json;
+      document.getElementById("output").style.display = "block";
+      status.textContent = `Encrypted ${entries.length} entr${entries.length === 1 ? "y" : "ies"}. The passphrase and plaintext never leave this page.`;
+
+      document.getElementById("copyBtn").onclick = async () => {
+        await navigator.clipboard.writeText(json);
+        status.textContent = "Copied to clipboard.";
+      };
+      document.getElementById("downloadBtn").onclick = () => {
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "vault.enc.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+    });
+  </script>
+</body>
+</html>

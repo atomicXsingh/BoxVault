@@ -1,0 +1,5 @@
+# Never let raw secrets or scratch notes get committed by accident
+*.plain.json
+*.secrets.*
+notes.txt
+.DS_Store

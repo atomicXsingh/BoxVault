@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deposit Box — private vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="lock-screen" id="lockScreen">
+    <div class="dial-wrap" id="dialWrap">
+      <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="110" cy="110" r="104" fill="var(--panel)" stroke="var(--brass-dim)" stroke-width="2"/>
+        <circle cx="110" cy="110" r="90" fill="none" stroke="var(--seam)" stroke-width="1"/>
+        <g stroke="var(--brass)" stroke-width="2">
+          <!-- tick marks -->
+          <g id="ticks"></g>
+        </g>
+        <circle cx="110" cy="110" r="52" fill="var(--panel-raised)" stroke="var(--brass)" stroke-width="2"/>
+        <g stroke="var(--brass-light)" stroke-width="4" stroke-linecap="round">
+          <line x1="110" y1="110" x2="110" y2="72"/>
+          <line x1="110" y1="110" x2="140" y2="128"/>
+        </g>
+        <circle cx="110" cy="110" r="6" fill="var(--brass-light)"/>
+      </svg>
+    </div>
+
+    <h1>Deposit box vault</h1>
+    <p class="sub">A locally-encrypted store for private notes and keys.<br />Everything is decrypted in your browser — nothing is sent anywhere.</p>
+
+    <div class="passphrase-row">
+      <input type="password" id="passphrase" placeholder="Enter passphrase" autocomplete="off" />
+    </div>
+    <button class="btn-primary" id="unlockBtn">Turn the handle</button>
+    <p class="error-msg" id="errorMsg"></p>
+
+    <p class="hint">
+      This is a demo pattern, not a production secrets manager. The vault file holds ciphertext only — AES-256-GCM, key derived from your passphrase with PBKDF2 (250,000 rounds). A weak passphrase is still guessable offline, so use a long one. See the README before storing anything you actually care about.
+    </p>
+  </main>
+
+  <section class="vault-screen" id="vaultScreen">
+    <div class="vault-header">
+      <div>
+        <h2>Contents</h2>
+        <div class="sub" id="entryCount"></div>
+      </div>
+      <button class="lock-btn" id="lockBtn">Close vault</button>
+    </div>
+
+    <div class="box-list" id="boxList"></div>
+
+    <p class="vault-footer">
+      Decrypted locally. Reload the page or click "Close vault" to clear this from memory.
+    </p>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
